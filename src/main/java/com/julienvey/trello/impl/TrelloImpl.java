@@ -1,5 +1,7 @@
 package com.julienvey.trello.impl;
 
+import com.google.common.util.concurrent.RateLimiter;
+
 import static com.julienvey.trello.impl.TrelloUrl.*;
 
 import java.io.File;
@@ -36,11 +38,17 @@ public class TrelloImpl implements Trello {
     private String applicationKey;
     private String accessToken;
 
+    public static final RateLimiter STANDARD_RATE = RateLimiter.create(10.0);
+
     private static Logger logger = LoggerFactory.getLogger(TrelloImpl.class);
 
+    public TrelloImpl(String apiKey, String accessToken) {
+        this(apiKey, accessToken, STANDARD_RATE);
+    }
+
     // FIXME : remove me
-    public TrelloImpl(String applicationKey, String accessToken) {
-        this(applicationKey, accessToken, new RestTemplateHttpClient());
+    public TrelloImpl(String applicationKey, String accessToken, RateLimiter rateLimiter) {
+        this(applicationKey, accessToken, new RestTemplateHttpClient(rateLimiter));
     }
 
     public TrelloImpl(String applicationKey, String accessToken, TrelloHttpClient httpClient) {

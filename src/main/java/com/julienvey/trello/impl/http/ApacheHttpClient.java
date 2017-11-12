@@ -1,5 +1,7 @@
 package com.julienvey.trello.impl.http;
 
+import com.google.common.util.concurrent.RateLimiter;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -22,19 +24,26 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.julienvey.trello.exception.TrelloHttpException;
+import com.julienvey.trello.impl.TrelloImpl;
 
 public class ApacheHttpClient extends AbstractHttpClient {
 
     private DefaultHttpClient httpClient;
     private ObjectMapper mapper;
+    private final RateLimiter rateLimiter;
 
     public ApacheHttpClient() {
-        this(new DefaultHttpClient());
+        this (new DefaultHttpClient(), TrelloImpl.STANDARD_RATE);
     }
 
-    public ApacheHttpClient(DefaultHttpClient httpClient) {
+    public ApacheHttpClient(RateLimiter rateLimiter) {
+        this(new DefaultHttpClient(), rateLimiter);
+    }
+
+    public ApacheHttpClient(DefaultHttpClient httpClient, RateLimiter rateLimiter) {
         this.httpClient = httpClient;
         this.mapper = new ObjectMapper();
+        this.rateLimiter = rateLimiter;
     }
 
     @Override
@@ -50,7 +59,7 @@ public class ApacheHttpClient extends AbstractHttpClient {
         try {
             HttpEntity entity = new ByteArrayEntity(this.mapper.writeValueAsBytes(object), ContentType.APPLICATION_JSON);
             httpPost.setEntity(entity);
-
+            rateLimiter.acquire();
             return getEntityAndReleaseConnection(objectClass, httpPost);
         } catch (JsonProcessingException e) {
             // TODO : custom exception
@@ -70,7 +79,7 @@ public class ApacheHttpClient extends AbstractHttpClient {
         }
 
         httpPost.setEntity(entity);
-
+        rateLimiter.acquire();
         return getEntityAndReleaseConnection(objectClass, httpPost);
     }
 
@@ -80,7 +89,7 @@ public class ApacheHttpClient extends AbstractHttpClient {
         try {
             HttpEntity entity = new ByteArrayEntity(this.mapper.writeValueAsBytes(object), ContentType.APPLICATION_JSON);
             put.setEntity(entity);
-
+            rateLimiter.acquire();
             return getEntityAndReleaseConnection(objectClass, put);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
@@ -94,6 +103,7 @@ public class ApacheHttpClient extends AbstractHttpClient {
         try {
             HttpEntity entity = new ByteArrayEntity(this.mapper.writeValueAsBytes(object), ContentType.APPLICATION_JSON);
             httpPost.setEntity(entity);
+            rateLimiter.acquire();
             HttpResponse httpResponse = this.httpClient.execute(httpPost);
 
             Header location = httpResponse.getFirstHeader("Location");
@@ -115,6 +125,7 @@ public class ApacheHttpClient extends AbstractHttpClient {
 
     private <T> T getEntityAndReleaseConnection(Class<T> objectClass, HttpRequestBase httpRequest) {
         try {
+            rateLimiter.acquire();
             HttpResponse httpResponse = this.httpClient.execute(httpRequest);
 
             HttpEntity httpEntity = httpResponse.getEntity();
