@@ -43,6 +43,10 @@ public class TrelloImpl implements Trello {
 
     private static Logger logger = LoggerFactory.getLogger(TrelloImpl.class);
 
+    public TrelloImpl() {
+        this(null, null);
+    }
+
     public TrelloImpl(String apiKey, String accessToken) {
         this(apiKey, accessToken, STANDARD_RATE);
     }
