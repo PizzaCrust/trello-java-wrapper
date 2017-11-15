@@ -31,6 +31,7 @@ import com.julienvey.trello.impl.domaininternal.Comment;
 import com.julienvey.trello.impl.domaininternal.Label;
 import com.julienvey.trello.impl.http.ApacheHttpClient;
 import com.julienvey.trello.impl.http.RestTemplateHttpClient;
+import com.mashape.unirest.http.Unirest;
 
 public class TrelloImpl implements Trello {
 
@@ -123,6 +124,29 @@ public class TrelloImpl implements Trello {
             member.setInternalTrello(this);
         }
         return members;
+    }
+
+    public void addLabel(Card card, String idLabel) throws Exception {
+        String url = "https://api.trello.com/1/cards/" + card.getId() + "/idLabels";
+        STANDARD_RATE.acquire();
+        Unirest.post(url).field("value", idLabel).field("key", this.applicationKey).field
+                ("token", this.accessToken)
+                .asString();
+    }
+
+    public void removeAllAttachments(Card card) throws Exception {
+        for (Attachment attachment : getCardAttachments(card.getId())) {
+            STANDARD_RATE.acquire();
+            Unirest.delete("https://api.trello.com/1/cards/" + card.getId() +
+                    "/attachments/" + attachment.getId()).field("key", applicationKey).field("token",
+                    accessToken).asString();
+        }
+    }
+
+    public void archiveAllCards(TList list) throws Exception {
+        STANDARD_RATE.acquire();
+        Unirest.post("https://api.trello.com/1/lists/" + list.getId() + "/archiveAllCards").field
+                ("key", applicationKey).field("token", accessToken).asString();
     }
 
     @Override

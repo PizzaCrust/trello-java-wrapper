@@ -15,6 +15,7 @@ public class Card extends TrelloEntity {
     private String url;
     private Date due;
     private List<String> idMembers;
+    private List<String> idLabels;
     private List<Label> labels;
     private Badges badges;
     private List<CardCheckItem> checkItemStates;
