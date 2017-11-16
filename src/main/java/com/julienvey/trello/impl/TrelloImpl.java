@@ -39,7 +39,7 @@ public class TrelloImpl implements Trello {
     private String applicationKey;
     private String accessToken;
 
-    public static final RateLimiter STANDARD_RATE = RateLimiter.create(10.0);
+    public static final RateLimiter STANDARD_RATE = RateLimiter.create(8.0);
 
     private static Logger logger = LoggerFactory.getLogger(TrelloImpl.class);
 
